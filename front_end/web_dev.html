@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coordinate and Date Input Form</title>
+    <link rel="stylesheet" href="web_dev.css"> 
+</head>
+
+<body>
+    <h1>Enter Coordinates and Date/Time</h1>
+    <form action="/submit" method="post">
+        <!-- X-coordinate Input -->
+        <label for="x-coordinate">X-coordinate:</label>
+        <input type="number" id="x-coordinate" name="x-coordinate" required>
+
+        <!-- Y-coordinate Input -->
+        <label for="y-coordinate">Y-coordinate:</label>
+        <input type="number" id="y-coordinate" name="y-coordinate" required>
+
+        <!-- Date Input -->
+        <label for="date">Date:</label>
+        <input type="date" id="date" name="date" required>
+
+        <!-- Time Input -->
+        <label for="time">Time:</label>
+        <input type="time" id="time" name="time" required>
+
+        <!-- Submit Button -->
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
