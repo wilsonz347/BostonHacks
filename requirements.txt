@@ -6,3 +6,5 @@ next
 tailwind
 mantine
 vercel
+streamlit
+seaborn
