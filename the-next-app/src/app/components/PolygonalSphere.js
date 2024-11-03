@@ -161,6 +161,12 @@ const PolygonalSphere = () => {
 
   const handleClick = async (event) => {
 
+    // const response = await fetch(`http://localhost:5000/predict?planet_name=${planetName}`);
+    // if (!response.ok) throw new Error('Failed to fetch prediction');
+    // const data = await response.json();
+
+    // console.log(data);
+
 
 
     if (!sphereRef.current || !cameraRef.current) return;
@@ -193,18 +199,14 @@ const PolygonalSphere = () => {
       setIsLoading(true);
 
       try {
-        const response = await fetch('/api/solar-coordinates', {
+        const response = await fetch('http://localhost:3000/predict', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            x_asec: coords.x_asec.toFixed(2),
-            y_asec: coords.y_asec.toFixed(2),
-            distance: Math.sqrt(coords.x_asec.toFixed(2) * coords.x_asec.toFixed(2)
-             + coords.y_asec.toFixed(2) * coords.y_asec.toFixed(2))
-          }),
+          body: JSON.stringify(coords)
         });
+        console.log(response);
 
         if (!response.ok) {
           throw new Error('Network response was not ok');
@@ -284,17 +286,12 @@ const PolygonalSphere = () => {
       <div ref={containerRef} className="w-full h-screen" />
       
       {/* Fixed overlay for coordinates */}
-      <div 
-        className="absolute top-0 left-0 w-full"
-        style={{ zIndex: 1000 }}
-      >
+      <div className="absolute top-0 left-0 w-full" style={{ zIndex: 1000 }}>
         {/* Dark gradient background */}
-        <div 
-          className="w-full py-6"
-          style={{
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%)',
-          }}
-        >
+        <div className="w-full py-6" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%)', }}>
+          
+          
+          
           {selectedCoords ? (
             <div className="text-center">
               {/* Large coordinate display */}
@@ -305,13 +302,13 @@ const PolygonalSphere = () => {
                 <span className="mx-6">
                   Y: {selectedCoords.y_asec.toFixed(1)}″
                 </span>
-                <span className="mx-6">
+                {/* <span className="mx-6">
                   RADIAL: {selectedCoords.distance.toFixed(1)}″
-                </span>
+                </span> */}
                 <span className="mx-6">
-                  Peak CS: {selectedCoords.peak_cs.toFixed(1)}″
+                  Duration: {selectedCoords.peak_cs.toFixed(1)}″
                 </span>
-                <span className="mx-6">
+                {/* <span className="mx-6">
                   Total Counts: {selectedCoords.total_counts.toFixed(1)}″
                 </span>
 
@@ -323,7 +320,7 @@ const PolygonalSphere = () => {
                 </span>
                 <span className="mx-6">
                   Energy High Ev: {selectedCoords.energy_high_ev.toFixed(1)}″
-                </span>
+                </span> */}
               </div>
               
               {/* Prediction or loading state */}
