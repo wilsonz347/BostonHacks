@@ -17,6 +17,10 @@ Next.js
 Jupyter Notebook
 Streamlit
 Flask
+Scikit-learn
+
+## Machine Learning 
+- We utilized the K-Nearest Neighbor Algorithm to predict solar flare duration using a dataset from Kaggle. 
 
 ## Installation
 Clone the repository:
