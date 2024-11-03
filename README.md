@@ -20,18 +20,14 @@ Flask
 
 ## Installation
 Clone the repository:
-text
 git clone https://github.com/your-username/solar-flare-predictor.git
 cd solar-flare-predictor
 
 Install the required dependencies:
-text
 pip install -r requirements.txt
 
 Run the Streamlit application:
-text
 streamlit run app.py
 
 Start the Next.js development server:
-text
 npm run dev
