@@ -1,64 +1,192 @@
-
+'use client'
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { EdgesGeometry } from 'three';
 
-const vertexShader = `
-  varying vec3 vNormal;
-  varying vec3 vPosition;
-  void main() {
-    vNormal = normalize(normalMatrix * normal);
-    vPosition = position;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-
-const fragmentShader = `
-  varying vec3 vNormal;
-  varying vec3 vPosition;
-  void main() {
-    float intensity = pow(0.7 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
-    vec3 orange = vec3(1.0, 0.6, 0.0);
-    vec3 red = vec3(1.0, 0.1, 0.0);
-    gl_FragColor = vec4(mix(orange, red, intensity), 1.0);
-  }
-`;
-
 const PolygonalSphere = () => {
-  // All state declarations at the top
+  const containerRef = useRef(null);
+  const rendererRef = useRef(null);
+  const sceneRef = useRef(null);
+  const cameraRef = useRef(null);
+  const sphereRef = useRef(null);
+  const groupRef = useRef(null);
+  const isDraggingRef = useRef(false);
+  const mouseDownPositionRef = useRef({ x: 0, y: 0 });
+  const previousMousePositionRef = useRef({ x: 0, y: 0 });
+
   const [selectedCoords, setSelectedCoords] = useState(null);
   const [prediction, setPrediction] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // All refs
-  const mountRef = useRef(null);
-  const sphereRef = useRef(null);
-  const sceneRef = useRef(null);
-  const cameraRef = useRef(null);
-  const rendererRef = useRef(null);
-  const groupRef = useRef(null);
-  const isDraggingRef = useRef(false);
-  const previousMousePositionRef = useRef({ x: 0, y: 0 });
-  const mouseDownPositionRef = useRef({ x: 0, y: 0 });
-  const raycasterRef = useRef(new THREE.Raycaster());
-  const mouseRef = useRef(new THREE.Vector2());
+  useEffect(() => {
+    if (!containerRef.current) return;
 
-  // Handler functions defined outside useEffect
+    // Scene setup
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
+    sceneRef.current = scene;
+
+    // Camera setup
+    const camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
+    camera.position.z = 2;
+    cameraRef.current = camera;
+
+    // Renderer setup
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    rendererRef.current = renderer;
+    containerRef.current.appendChild(renderer.domElement);
+
+    // Group setup
+    const group = new THREE.Group();
+    groupRef.current = group;
+    scene.add(group);
+
+    // Create sphere with shaders
+    const sphereGeometry = new THREE.IcosahedronGeometry(1, 2);
+    const sphereMaterial = new THREE.ShaderMaterial({
+      vertexShader: `
+        varying vec3 vNormal;
+        void main() {
+          vNormal = normalize(normalMatrix * normal);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        varying vec3 vNormal;
+        void main() {
+          float intensity = pow(0.7 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
+          vec3 orange = vec3(1.0, 0.6, 0.0);
+          vec3 red = vec3(1.0, 0.1, 0.0);
+          gl_FragColor = vec4(mix(orange, red, intensity), 1.0);
+        }
+      `,
+      flatShading: true,
+    });
+    const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+    sphereRef.current = sphere;
+    group.add(sphere);
+
+    // Add edges
+    const edgesGeometry = new EdgesGeometry(sphereGeometry);
+    const edgesMaterial = new THREE.LineBasicMaterial({
+      color: 0x000000,
+      transparent: true,
+      opacity: 0.5,
+    });
+    const edges = new THREE.LineSegments(edgesGeometry, edgesMaterial);
+    edges.scale.setScalar(1.001);
+    group.add(edges);
+
+    // Add glow effect
+    const glowGeometry = new THREE.IcosahedronGeometry(1.1, 2);
+    const glowMaterial = new THREE.ShaderMaterial({
+      vertexShader: `
+        void main() {
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        void main() {
+          gl_FragColor = vec4(1.0, 0.5, 0.0, 0.1);
+        }
+      `,
+      transparent: true,
+      side: THREE.BackSide,
+    });
+    const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+    group.add(glow);
+
+    // Animation loop
+    const animate = () => {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    // Event handlers
+    const handleResize = () => {
+      if (camera && renderer) {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (containerRef.current && renderer.domElement) {
+        containerRef.current.removeChild(renderer.domElement);
+      }
+      renderer.dispose();
+      sphereGeometry.dispose();
+      sphereMaterial.dispose();
+      edgesGeometry.dispose();
+      edgesMaterial.dispose();
+      glowGeometry.dispose();
+      glowMaterial.dispose();
+    };
+  }, []);
+
+
+
+//   const RandomInputGenerator = () => {
+//     // State to store our random inputs
+//     const [inputs, setInputs] = useState({
+//       peak_cs: 0,
+//       total_counts: 0,
+//       x_pos_asec: 0,
+//       y_pos_asec: 0,
+//       radial: 0,
+//       active_region_ar: 0,
+//       energy_low_ev: 0,
+//       energy_high_ev: 0,
+//       duration_s: 0 // This is our target variable
+//     });
+  
+    // Function to generate random number within a range
+    const getRandomNumber = (min, max, isInteger = true) => {
+      const random = Math.random() * (max - min) + min;
+      return isInteger ? Math.floor(random) : random;
+    };
+
+
   const handleClick = async (event) => {
+
+
+
     if (!sphereRef.current || !cameraRef.current) return;
 
-    mouseRef.current.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouseRef.current.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
 
-    raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current);
-    const intersects = raycasterRef.current.intersectObject(sphereRef.current);
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, cameraRef.current);
+    const intersects = raycaster.intersectObject(sphereRef.current);
 
     if (intersects.length > 0) {
       const point = intersects[0].point;
       const SOLAR_RADIUS_ARCSEC = 959.63;
       const coords = {
         x_asec: Math.atan2(point.x, point.z) * SOLAR_RADIUS_ARCSEC,
-        y_asec: Math.asin(point.y) * SOLAR_RADIUS_ARCSEC
+        y_asec: Math.asin(point.y) * SOLAR_RADIUS_ARCSEC,
+        distance: Math.sqrt(Math.atan2(point.x, point.z) * SOLAR_RADIUS_ARCSEC * Math.atan2(point.x, point.z) * SOLAR_RADIUS_ARCSEC
+         + Math.asin(point.y) * SOLAR_RADIUS_ARCSEC * Math.asin(point.y) * SOLAR_RADIUS_ARCSEC),
+         peak_cs: getRandomNumber(0, 1000),
+         total_counts: getRandomNumber(0, 10000, false),
+         active_region_ar: getRandomNumber(0, 5000),
+         energy_low_ev: getRandomNumber(0, 1000),
+         energy_high_ev: getRandomNumber(1000, 10000)
       };
       
       setSelectedCoords(coords);
@@ -72,7 +200,9 @@ const PolygonalSphere = () => {
           },
           body: JSON.stringify({
             x_asec: coords.x_asec.toFixed(2),
-            y_asec: coords.y_asec.toFixed(2)
+            y_asec: coords.y_asec.toFixed(2),
+            distance: Math.sqrt(coords.x_asec.toFixed(2) * coords.x_asec.toFixed(2)
+             + coords.y_asec.toFixed(2) * coords.y_asec.toFixed(2))
           }),
         });
 
@@ -138,142 +268,77 @@ const PolygonalSphere = () => {
   };
 
   useEffect(() => {
-    // Scene setup
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000);
-    sceneRef.current = scene;
-
-    // Camera setup
-    const camera = new THREE.PerspectiveCamera(
-      75,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000
-    );
-    camera.position.z = 2;
-    cameraRef.current = camera;
-
-    // Renderer setup
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    rendererRef.current = renderer;
-    if (mountRef.current) {
-      mountRef.current.appendChild(renderer.domElement);
-    }
-
-    // Group setup
-    const group = new THREE.Group();
-    groupRef.current = group;
-    scene.add(group);
-
-    // Create sphere
-    const sphereGeometry = new THREE.IcosahedronGeometry(1, 2);
-    const sphereMaterial = new THREE.ShaderMaterial({
-      uniforms: {},
-      vertexShader,
-      fragmentShader,
-      flatShading: true,
-    });
-    const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-    sphereRef.current = sphere;
-    group.add(sphere);
-
-    // Create edges
-    const edgesGeometry = new EdgesGeometry(sphereGeometry);
-    const edgesMaterial = new THREE.LineBasicMaterial({ 
-      color: 0x000000,
-      transparent: true,
-      opacity: 0.5,
-    });
-    const edges = new THREE.LineSegments(edgesGeometry, edgesMaterial);
-    edges.scale.setScalar(1.001);
-    group.add(edges);
-
-    // Add glow
-    const glowGeometry = new THREE.IcosahedronGeometry(1.1, 2);
-    const glowMaterial = new THREE.ShaderMaterial({
-      uniforms: {},
-      vertexShader: `
-        void main() {
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        void main() {
-          gl_FragColor = vec4(1.0, 0.5, 0.0, 0.1);
-        }
-      `,
-      transparent: true,
-      side: THREE.BackSide,
-    });
-    const glow = new THREE.Mesh(glowGeometry, glowMaterial);
-    group.add(glow);
-
-    // Animation
-    const animate = () => {
-      requestAnimationFrame(animate);
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    // Event listeners
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-
-    window.addEventListener('resize', handleResize);
     document.addEventListener('mousedown', handleMouseDown);
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
 
-    // Cleanup
     return () => {
-      window.removeEventListener('resize', handleResize);
       document.removeEventListener('mousedown', handleMouseDown);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
-      
-      mountRef.current?.removeChild(renderer.domElement);
-      
-      sphereGeometry.dispose();
-      sphereMaterial.dispose();
-      edgesGeometry.dispose();
-      edgesMaterial.dispose();
-      glowGeometry.dispose();
-      glowMaterial.dispose();
     };
   }, []);
 
   return (
     <div className="relative w-full h-screen">
-      <div ref={mountRef} className="w-full h-screen" />
+      <div ref={containerRef} className="w-full h-screen" />
       
-      <div className="fixed top-0 left-0 right-0 z-10">
-        <div className="flex justify-center items-center h-32 bg-gradient-to-b from-black to-transparent">
+      {/* Fixed overlay for coordinates */}
+      <div 
+        className="absolute top-0 left-0 w-full"
+        style={{ zIndex: 1000 }}
+      >
+        {/* Dark gradient background */}
+        <div 
+          className="w-full py-6"
+          style={{
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%)',
+          }}
+        >
           {selectedCoords ? (
             <div className="text-center">
-              <div className="text-5xl text-white font-bold tracking-wider">
-                <span className="px-6">
+              {/* Large coordinate display */}
+              <div className="text-6xl text-white font-bold tracking-wider mb-2">
+                <span className="mx-6">
                   X: {selectedCoords.x_asec.toFixed(1)}″
                 </span>
-                <span className="px-6">
+                <span className="mx-6">
                   Y: {selectedCoords.y_asec.toFixed(1)}″
                 </span>
+                <span className="mx-6">
+                  RADIAL: {selectedCoords.distance.toFixed(1)}″
+                </span>
+                <span className="mx-6">
+                  Peak CS: {selectedCoords.peak_cs.toFixed(1)}″
+                </span>
+                <span className="mx-6">
+                  Total Counts: {selectedCoords.total_counts.toFixed(1)}″
+                </span>
+
+                <span className="mx-6">
+                  Active Region AR: {selectedCoords.active_region_ar.toFixed(1)}″
+                </span>
+                <span className="mx-6">
+                  Energy Low Ev: {selectedCoords.energy_low_ev.toFixed(1)}″
+                </span>
+                <span className="mx-6">
+                  Energy High Ev: {selectedCoords.energy_high_ev.toFixed(1)}″
+                </span>
               </div>
+              
+              {/* Prediction or loading state */}
               {isLoading ? (
-                <div className="text-2xl text-orange-300 mt-2">
+                <div className="text-3xl text-orange-300 mt-4">
                   Loading prediction...
                 </div>
               ) : prediction ? (
-                <div className="text-2xl text-orange-300 mt-2">
+                <div className="text-3xl text-orange-300 mt-4">
                   Prediction: {prediction}
                 </div>
               ) : null}
             </div>
           ) : (
-            <div className="text-2xl text-white opacity-50">
+            <div className="text-3xl text-white text-center opacity-75">
               Click on the sun to measure coordinates
             </div>
           )}
@@ -282,5 +347,7 @@ const PolygonalSphere = () => {
     </div>
   );
 };
+
+
 
 export default PolygonalSphere;
