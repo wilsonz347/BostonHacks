@@ -3,10 +3,10 @@
 This project predicts the duration of solar flares using machine learning techniques and provides an interactive visualization of the sun's rotation.
 
 ## Features
-Predicts solar flare duration in seconds based on randomized features
-Simulates a rotating sun with X and Y coordinate display
-Interactive Streamlit application for visualizations and custom predictions
-User-friendly interface with customizable sliders for prediction inputs
+- Predicts solar flare duration in seconds based on randomized features
+- Simulates a rotating sun with X and Y coordinate display
+- Interactive Streamlit application for visualizations and custom predictions
+- User-friendly interface with customizable sliders for prediction inputs
 
 ## Technology Stack
 ### Frontend
