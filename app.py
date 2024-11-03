@@ -12,7 +12,6 @@ with open('regressor.pkl', 'rb') as f:
 with open('scaler.pkl', 'rb') as f:
     scaler = pickle.load(f)
 
-
 # Load the data
 @st.cache_data
 def load_data():
@@ -75,14 +74,14 @@ elif page == "Prediction":
 
     # Input fields for prediction
     st.subheader("Enter Solar Flare Parameters:")
-    peak_cs = st.number_input("Peak Count Rate (c/s)", min_value=0, value=1000)
-    total_counts = st.number_input("Total Counts", min_value=0, value=1000)
-    x_pos = st.number_input("X Position (arcsec)", value=0)
-    y_pos = st.number_input("Y Position (arcsec)", value=0)
-    radial = st.number_input("Radial Position", min_value=0, value=100)
-    active_region = st.number_input("Active Region Number", min_value=0, value=11000)
-    energy_low = st.number_input("Energy Low (eV)", min_value=0, value=1000)
-    energy_high = st.number_input("Energy High (eV)", min_value=0, value=10000)
+    peak_cs = st.number_input("Peak Count Rate (c/s)", min_value=0, max_value=261, value = 100)
+    total_counts = st.number_input("Total Counts", min_value=0, max_value=195639,value=1000)
+    x_pos = st.number_input("X Position (arcsec)", min_value=-1242, max_value=1190, value=0)
+    y_pos = st.number_input("Y Position (arcsec)", min_value=-998, max_value=959,value=0)
+    radial = st.number_input("Radial Position", min_value=0, max_value=1547, value=100)
+    active_region = st.number_input("Active Region Number", min_value=0, max_value=2700, value=0)
+    energy_low = st.number_input("Energy Low (eV)", min_value=0, max_value=6000, value=1000)
+    energy_high = st.number_input("Energy High (eV)", min_value=0, max_value=12000, value=5000)
 
     # Make prediction
     if st.button("Predict Duration"):
